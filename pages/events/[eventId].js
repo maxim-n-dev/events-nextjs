@@ -17,7 +17,7 @@ function EventDetailPage() {
 		return <p> No event found! </p>;
 	}
 
-	return ( 
+	return (
 		<Fragment>
 			<EventSummary />
 			<EventLogistics
