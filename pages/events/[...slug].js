@@ -7,17 +7,20 @@ import EventList from "../../components/events/event-list";
 import ResultsTitle from "../../components/events/results-title";
 import Button from "../../components/ui/button";
 import ErrorAlert from "../../components/ui/error-alert";
+import Head from "next/head";
 
 function FilteredEventsPage(props) {
-  const [loadedEvents, setLoadedEvents] = useState();
+	const [loadedEvents, setLoadedEvents] = useState();
 	const router = useRouter();
 
 	const filterData = router.query.slug;
 
-  const fetcher = (url) => fetch(url).then((res) => res.json());
+	const fetcher = (url) => fetch(url).then((res) => res.json());
 
 	const { data, error } = useSWR(
-		"https://nextjs-course-1b7c4-default-rtdb.europe-west1.firebasedatabase.app/events.json",fetcher );
+		"https://nextjs-course-1b7c4-default-rtdb.europe-west1.firebasedatabase.app/events.json",
+		fetcher
+	);
 	useEffect(() => {
 		if (data) {
 			const events = [];
@@ -27,30 +30,45 @@ function FilteredEventsPage(props) {
 					...data[key],
 				});
 			}
-      setLoadedEvents(events);
+			setLoadedEvents(events);
 		}
 	}, [data]);
 
+  let pageHeadData = <Head>
+    <title>Filtered events</title>
+		<meta name="description" content={`A list of filtered events.`} />
+  </Head>;
+
+
+
 	if (!loadedEvents) {
-		return <p className="center">Loading...</p>;
+		return (
+			<Fragment>
+				{pageHeadData}
+				<p className="center">Loading...</p>
+			</Fragment>
+		);
 	}
 
-	const filteredYear = filterData[0];
+  const filteredYear = filterData[0];
 	const filteredMonth = filterData[1];
 
 	const numYear = +filteredYear;
 	const numMonth = +filteredMonth;
 
-  if (
-    isNaN(numYear) ||
-    isNaN(numMonth) ||
-    numYear > 2030 ||
-    numYear < 2021 ||
-    numMonth < 1 ||
-    numMonth > 12 || error
-  ) {
-    return (
+  pageHeadData = (
+		<Head>
+			<title>Filtered events</title>
+			<meta name="description" content={`All events for ${numMonth}/${numYear}.`} />
+		</Head>
+	);
+
+	if (isNaN(numYear) || isNaN(numMonth) || numYear > 2030 || numYear < 2021 
+      || numMonth < 1 || numMonth > 12 || error) 
+  {
+		return (
 			<Fragment>
+        {pageHeadData}
 				<ErrorAlert>
 					<p>Invalid filter. Please adjust your values!</p>
 				</ErrorAlert>
@@ -59,17 +77,17 @@ function FilteredEventsPage(props) {
 				</div>
 			</Fragment>
 		);
-  }
-  
-  let filteredEvents = loadedEvents.filter((event) => {
-    const eventDate = new Date(event.date);
-    return eventDate.getFullYear() === numYear && eventDate.getMonth() === numMonth - 1;
-  });
+	}
 
+	let filteredEvents = loadedEvents.filter((event) => {
+		const eventDate = new Date(event.date);
+		return eventDate.getFullYear() === numYear && eventDate.getMonth() === numMonth - 1;
+	});
 
 	if (!filteredEvents || filteredEvents.length === 0) {
 		return (
 			<Fragment>
+        {pageHeadData}
 				<ErrorAlert>
 					<p>No events found for the chosen filter!</p>
 				</ErrorAlert>
@@ -84,6 +102,7 @@ function FilteredEventsPage(props) {
 
 	return (
 		<Fragment>
+      {pageHeadData}
 			<ResultsTitle date={date} />
 			<EventList items={filteredEvents} />
 		</Fragment>
